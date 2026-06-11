@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Antigravity V4 — Pinch Tabanlı Temassız PC Kontrolü</title>
+<meta name="description" content="Webcam'i temassız giriş cihazına dönüştüren deneysel sistem: MediaPipe el/yüz takibi, histerezisli pinch durum makinesi, Alt-Tab karuseli ve yüz ifadesi kısayolları.">
+<style>
+  :root {
+    --bg: #0c0c0e;
+    --bg-card: #121215;
+    --bg-soft: #1a1a20;
+    --border: #1f1f23;
+    --border-soft: #2d2d34;
+    --neon: #39ff14;
+    --magenta: #d946ef;
+    --text: #f4f4f5;
+    --muted: #a1a1aa;
+    --dim: #71717a;
+    --red: #e11d48;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    line-height: 1.65;
+  }
+  .wrap { max-width: 980px; margin: 0 auto; padding: 0 24px; }
+
+  /* HERO */
+  header {
+    position: relative;
+    padding: 90px 0 70px;
+    text-align: center;
+    overflow: hidden;
+    border-bottom: 1px solid var(--border);
+  }
+  header::before {
+    content: "";
+    position: absolute; top: 0; left: 50%;
+    transform: translateX(-50%);
+    width: 420px; height: 6px;
+    background: var(--neon);
+    border-radius: 0 0 8px 8px;
+    box-shadow: 0 0 40px 8px rgba(57,255,20,.45);
+  }
+  .badge {
+    display: inline-block;
+    font-size: 12px; font-weight: 700; letter-spacing: 1px;
+    color: var(--neon);
+    border: 1px solid rgba(57,255,20,.4);
+    background: rgba(57,255,20,.06);
+    padding: 6px 14px; border-radius: 999px;
+    margin-bottom: 22px;
+  }
+  h1 {
+    font-size: clamp(36px, 6vw, 58px);
+    font-weight: 900; letter-spacing: 2px;
+    color: var(--neon);
+    text-shadow: 0 0 30px rgba(57,255,20,.35);
+  }
+  .subtitle { font-size: clamp(16px, 2.4vw, 21px); color: var(--text); margin-top: 10px; font-weight: 600; }
+  .tagline { color: var(--muted); max-width: 640px; margin: 18px auto 0; font-size: 15px; }
+  .hero-links { margin-top: 30px; display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+  .btn {
+    text-decoration: none; font-weight: 700; font-size: 14px;
+    padding: 12px 26px; border-radius: 8px;
+  }
+  .btn-primary { background: var(--neon); color: #000; }
+  .btn-primary:hover { background: #2ee610; }
+  .btn-ghost { color: var(--text); border: 1px solid var(--border-soft); background: var(--bg-soft); }
+  .btn-ghost:hover { border-color: var(--neon); color: var(--neon); }
+
+  /* SECTIONS */
+  section { padding: 64px 0; border-bottom: 1px solid var(--border); }
+  .kicker { color: var(--neon); font-size: 12px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; }
+  h2 { font-size: clamp(24px, 3.6vw, 32px); font-weight: 800; margin: 8px 0 18px; }
+  p.lead { color: var(--muted); max-width: 760px; }
+  .grid { display: grid; gap: 16px; margin-top: 30px; }
+  .grid-2 { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+  .grid-3 { grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+  .card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 22px;
+  }
+  .card h3 { font-size: 16px; margin-bottom: 8px; color: var(--text); }
+  .card p { font-size: 14px; color: var(--muted); }
+  .card .num { color: var(--neon); font-weight: 900; font-size: 13px; letter-spacing: 1px; }
+  .accent { color: var(--neon); font-weight: 600; }
+  .accent-m { color: var(--magenta); font-weight: 600; }
+
+  /* GESTURE TABLE */
+  table { width: 100%; border-collapse: collapse; margin-top: 26px; font-size: 14px; }
+  th, td { text-align: left; padding: 13px 16px; border-bottom: 1px solid var(--border); }
+  th { color: var(--dim); font-size: 11px; letter-spacing: 1.2px; text-transform: uppercase; }
+  td:first-child { white-space: nowrap; font-weight: 600; }
+  td:last-child { color: var(--muted); }
+  tr:hover td { background: rgba(57,255,20,.03); }
+  .key {
+    font-family: Consolas, monospace; font-size: 12px;
+    background: var(--bg-soft); border: 1px solid var(--border-soft);
+    border-radius: 5px; padding: 2px 8px; color: var(--neon);
+  }
+
+  /* ARCHITECTURE DIAGRAM */
+  .diagram { margin-top: 30px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 18px; }
+  .diagram svg { width: 100%; height: auto; display: block; }
+
+  /* CODE */
+  pre {
+    background: #070709; border: 1px solid var(--border);
+    border-radius: 10px; padding: 20px; overflow-x: auto;
+    font-family: Consolas, 'Courier New', monospace; font-size: 13.5px;
+    color: #d4d4d8; margin-top: 20px;
+  }
+  pre .c { color: var(--dim); }
+  pre .g { color: var(--neon); }
+
+  /* CONCLUSION */
+  .verdict {
+    border-left: 3px solid var(--neon);
+    background: var(--bg-card);
+    border-radius: 0 12px 12px 0;
+    padding: 26px 28px; margin-top: 26px;
+  }
+  .verdict p { color: var(--muted); font-size: 15px; }
+  .verdict p + p { margin-top: 12px; }
+  .verdict strong { color: var(--text); }
+
+  footer { padding: 44px 0 60px; text-align: center; color: var(--dim); font-size: 13px; }
+  footer a { color: var(--neon); text-decoration: none; }
+  @media (max-width: 640px) { td:first-child { white-space: normal; } }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <div class="badge">DENEY TAMAMLANDI · SORUSU CEVAPLANDI · ARŞİV</div>
+    <h1>ANTIGRAVITY V4</h1>
+    <div class="subtitle">Pinch Tabanlı Temassız PC Kontrol Sistemi</div>
+    <p class="tagline">
+      Sıradan bir webcam'i tıklama, kaydırma, pencere yönetimi ve kısayol tetikleme yapabilen
+      temassız bir giriş cihazına dönüştüren deneysel sistem.
+      Python · PyQt6 · MediaPipe · Win32 API
+    </p>
+    <div class="hero-links">
+      <a class="btn btn-primary" href="https://github.com/safaeren777-collab/antigravity">Kaynak Kodu (GitHub)</a>
+      <a class="btn btn-ghost" href="#mimari">Mimariyi İncele ↓</a>
+    </div>
+  </div>
+</header>
+
+<section>
+  <div class="wrap">
+    <div class="kicker">Problem</div>
+    <h2>Havada imleç kontrolü neden başarısız olur?</h2>
+    <p class="lead">
+      Projenin ilk üç sürümü klasik yaklaşımı denedi: el konumunu imlece eşle, statik el pozlarını
+      (açık avuç, yumruk, barış işareti) komutlara bağla. İki yapısal sorunla karşılaştık:
+    </p>
+    <div class="grid grid-2">
+      <div class="card">
+        <h3>🦍 Gorilla Arm Sendromu</h3>
+        <p>Kolu havada tutarak yapılan hassas hareketler dakikalar içinde yorar. HCI literatüründe
+        iyi belgelenmiş bu sorunun çözümü büyük jestler değil, kolun dinlendiği pozisyondan
+        yapılabilen <span class="accent">küçük, desteklenmiş hareketler</span>dir.</p>
+      </div>
+      <div class="card">
+        <h3>📳 Jest Titremesi</h3>
+        <p>Statik poz sınıflandırması kare kare değişir. Tek eşikli sistemde "açık avuç" komutu
+        sürekli açılıp iptal olur — V3 loglarında aynı saniyede defalarca
+        <i>activated → cancelled</i> döngüsü görülüyordu. Çözüm:
+        <span class="accent">histerezis + durum makinesi</span>.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="kicker">Çözüm</div>
+    <h2>Pinch: havadaki dokunma anı</h2>
+    <p class="lead">
+      V4, Apple Vision Pro'nun da benimsediği modeli webcam'e taşır: imleç yok, ayrık komutlar var.
+      Temel birim <b>pinch</b> (başparmak + parmak ucu teması) — çünkü tek bir mesafe ölçümüyle,
+      el boyutuna normalize edilerek son derece güvenilir algılanır.
+    </p>
+    <div class="grid grid-3">
+      <div class="card">
+        <div class="num">01 · HİSTEREZİS</div>
+        <h3>Çift eşikli algılama</h3>
+        <p>Pinch, normalize mesafe <span class="key">0.40</span>'ın altına inince başlar ama ancak
+        <span class="key">0.60</span>'ın üstüne çıkınca biter. Aradaki bölge titremeyi yapısal olarak yok eder.</p>
+      </div>
+      <div class="card">
+        <div class="num">02 · TOUCHPAD METAFORU</div>
+        <h3>Pinch = dokunma</h3>
+        <p>Laptop touchpad'inin rahatlığının sırrı, dokunuşun jestin başını/sonunu netleştirmesidir.
+        Pinch aynı görevi havada üstlenir: <b>pinch yap → sürükle → bırak</b>.</p>
+      </div>
+      <div class="card">
+        <div class="num">03 · TAP / HOLD / DRAG</div>
+        <h3>Tek jestten üç olay</h3>
+        <p>Kısa pinch = dokunuş (kısayol). Pinch + sürükleme = mod (scroll, karusel, swipe).
+        Hangi parmağın pinch yaptığı komut paletini belirler: 4 parmak = 4 ayrı "buton".</p>
+      </div>
+      <div class="card">
+        <div class="num">04 · ALT-TAB KARUSELİ</div>
+        <h3>Tut, gez, bırak</h3>
+        <p>Orta pinch + yatay sürükleme Alt'ı fiziksel olarak basılı tutar; el sağa/sola gezdikçe
+        pencere seçilir, pinch bırakılınca açılır. Alt tuşunun asılı kalmaması her çıkış yolunda
+        <span class="key">release_all()</span> ile garanti edilir.</p>
+      </div>
+      <div class="card">
+        <div class="num">05 · BELİRSİZLİK KORUMASI</div>
+        <h3>Yumruk ≠ pinch</h3>
+        <p>En yakın iki parmak ucu da pinch eşiğindeyse (yumruk yapılıyordur) jest reddedilir.
+        El ekrana ilk girdiğinde 300ms stabilizasyon süresi beklenir.</p>
+      </div>
+      <div class="card">
+        <div class="num">06 · YÜZ MODU</div>
+        <h3 class="accent-m">Eller tamamen serbest</h3>
+        <p>MediaPipe'ın 52 blendshape katsayısı eşik + tutma süresiyle kısayollara bağlanır.
+        Tutma süresi (250ms) normal göz kırpmayı (~150ms) eler; wink için tek-göz şartı aranır.
+        Eller klavyedeyken bile çalışır.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="kicker">Jest Paleti</div>
+    <h2>Varsayılan eşlemeler</h2>
+    <table>
+      <tr><th>Jest</th><th>Tür</th><th>İşlev</th></tr>
+      <tr><td>🤏 İşaret pinch</td><td>Tak</td><td>Onay / <span class="key">enter</span></td></tr>
+      <tr><td>🤏 İşaret pinch</td><td>Tut + sürükle</td><td>Sürekli scroll — anchor'dan uzaklık = hız (joystick mantığı)</td></tr>
+      <tr><td>🤏 Orta pinch</td><td>Yatay sürükle</td><td>Alt-Tab karuseli (bırakınca pencere seçilir)</td></tr>
+      <tr><td>🤏 Orta pinch</td><td>Dikey sürükle</td><td>Görev Görünümü <span class="key">win+tab</span> / Masaüstü <span class="key">win+d</span></td></tr>
+      <tr><td>🤏 Yüzük pinch</td><td>4 yön sürükle</td><td>Geri <span class="key">alt+left</span> · İleri <span class="key">alt+right</span> · Büyüt <span class="key">win+up</span> · Sekme Kapat <span class="key">ctrl+w</span></td></tr>
+      <tr><td>🤏 Orta / Yüzük / Serçe</td><td>Tak</td><td>Yeni Sekme <span class="key">ctrl+t</span> · Kopyala <span class="key">ctrl+c</span> · Yapıştır <span class="key">ctrl+v</span></td></tr>
+      <tr><td>🤨 Kaş kaldırma</td><td>Yüz modu</td><td>Uygulama değiştir <span class="key">alt+tab</span></td></tr>
+      <tr><td>😮 Ağız açma</td><td>Yüz modu</td><td>Oynat / Duraklat <span class="key">playpause</span></td></tr>
+      <tr><td>😉 Sol / sağ göz kırpma</td><td>Yüz modu</td><td>Geri / İleri</td></tr>
+    </table>
+    <p style="color:var(--dim); font-size:13px; margin-top:14px;">
+      Tüm eşlemeler ayarlar panelinden değiştirilebilir. Kısayol alanına <span class="key">app:</span>
+      öneki yazılırsa uygulama başlatılır (örn. <span class="key">app:spotify:</span>).
+    </p>
+  </div>
+</section>
+
+<section id="mimari">
+  <div class="wrap">
+    <div class="kicker">Mimari</div>
+    <h2>Sinyal tabanlı, çok iş parçacıklı tasarım</h2>
+    <p class="lead">
+      Görüntü işleme ayrı bir QThread'de koşar; jest olayları Qt sinyalleriyle ana iş parçacığına
+      taşınır, input simülasyonu orada yapılır. Böylece kamera döngüsü hiçbir zaman GUI veya
+      klavye simülasyonu tarafından bloklanmaz.
+    </p>
+    <div class="diagram">
+      <svg viewBox="0 0 960 560" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI, sans-serif">
+        <defs>
+          <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#39ff14"/>
+          </marker>
+        </defs>
+        <!-- Webcam -->
+        <rect x="20" y="40" width="150" height="78" rx="10" fill="#1a1a20" stroke="#2d2d34"/>
+        <text x="95" y="72" text-anchor="middle" fill="#f4f4f5" font-size="15" font-weight="700">📷 Webcam</text>
+        <text x="95" y="96" text-anchor="middle" fill="#71717a" font-size="11">MJPG · 1280×720 (16:9)</text>
+        <!-- Engine -->
+        <rect x="240" y="20" width="300" height="240" rx="12" fill="#121215" stroke="#39ff14" stroke-width="1.5"/>
+        <text x="390" y="50" text-anchor="middle" fill="#39ff14" font-size="15" font-weight="800">GestureEngine (QThread)</text>
+        <rect x="260" y="66" width="260" height="38" rx="7" fill="#1a1a20" stroke="#2d2d34"/>
+        <text x="390" y="90" text-anchor="middle" fill="#d4d4d8" font-size="12">MediaPipe HandLandmarker (21 nokta)</text>
+        <rect x="260" y="112" width="260" height="38" rx="7" fill="#1a1a20" stroke="#2d2d34"/>
+        <text x="390" y="136" text-anchor="middle" fill="#d4d4d8" font-size="12">Pinch Durum Makinesi (histerezis)</text>
+        <rect x="260" y="158" width="260" height="38" rx="7" fill="#1a1a20" stroke="#2d2d34"/>
+        <text x="390" y="182" text-anchor="middle" fill="#d4d4d8" font-size="12">MediaPipe FaceLandmarker (52 blendshape)</text>
+        <rect x="260" y="204" width="260" height="38" rx="7" fill="#1a1a20" stroke="#2d2d34"/>
+        <text x="390" y="228" text-anchor="middle" fill="#d4d4d8" font-size="12">İfade Durum Makinesi (eşik + tutma)</text>
+        <!-- Main -->
+        <rect x="630" y="60" width="300" height="160" rx="12" fill="#121215" stroke="#39ff14" stroke-width="1.5"/>
+        <text x="780" y="90" text-anchor="middle" fill="#39ff14" font-size="15" font-weight="800">main.py (Qt Ana Thread)</text>
+        <text x="780" y="118" text-anchor="middle" fill="#a1a1aa" font-size="12">Sinyal yönlendirme · config yönetimi</text>
+        <text x="780" y="140" text-anchor="middle" fill="#a1a1aa" font-size="12">Sistem tepsisi · mod durumları</text>
+        <rect x="650" y="158" width="260" height="40" rx="7" fill="#1a1a20" stroke="#2d2d34"/>
+        <text x="780" y="183" text-anchor="middle" fill="#d4d4d8" font-size="12">HotkeyListener — Win32 RegisterHotKey</text>
+        <!-- Arrows top -->
+        <line x1="170" y1="79" x2="232" y2="79" stroke="#39ff14" stroke-width="2" marker-end="url(#arr)"/>
+        <line x1="540" y1="140" x2="622" y2="140" stroke="#39ff14" stroke-width="2" marker-end="url(#arr)"/>
+        <text x="581" y="120" text-anchor="middle" fill="#39ff14" font-size="11" font-weight="700">Qt Sinyalleri</text>
+        <text x="581" y="160" text-anchor="middle" fill="#71717a" font-size="10">pinch_tap · swipe · scroll_delta</text>
+        <text x="581" y="174" text-anchor="middle" fill="#71717a" font-size="10">carousel · face_triggered</text>
+        <!-- Bottom row -->
+        <rect x="60" y="380" width="255" height="130" rx="12" fill="#121215" stroke="#2d2d34"/>
+        <text x="187" y="410" text-anchor="middle" fill="#f4f4f5" font-size="14" font-weight="800">ActionExecutor</text>
+        <text x="187" y="436" text-anchor="middle" fill="#a1a1aa" font-size="11.5">pyautogui kısayolları · app: başlatıcı</text>
+        <text x="187" y="456" text-anchor="middle" fill="#a1a1aa" font-size="11.5">Win32 mouse_event ham scroll</text>
+        <text x="187" y="476" text-anchor="middle" fill="#a1a1aa" font-size="11.5">Alt-Tab keyDown/keyUp + release_all()</text>
+        <rect x="355" y="380" width="255" height="130" rx="12" fill="#121215" stroke="#2d2d34"/>
+        <text x="482" y="410" text-anchor="middle" fill="#f4f4f5" font-size="14" font-weight="800">OverlayWindow</text>
+        <text x="482" y="436" text-anchor="middle" fill="#a1a1aa" font-size="11.5">Click-through şeffaf HUD (Win32)</text>
+        <text x="482" y="456" text-anchor="middle" fill="#a1a1aa" font-size="11.5">Mod pili: SCROLL / UYGULAMA GEÇİŞİ</text>
+        <text x="482" y="476" text-anchor="middle" fill="#a1a1aa" font-size="11.5">Kısayol toast bildirimleri</text>
+        <rect x="650" y="380" width="255" height="130" rx="12" fill="#121215" stroke="#2d2d34"/>
+        <text x="777" y="410" text-anchor="middle" fill="#f4f4f5" font-size="14" font-weight="800">SettingsWindow</text>
+        <text x="777" y="436" text-anchor="middle" fill="#a1a1aa" font-size="11.5">Canlı kamera telemetrisi</text>
+        <text x="777" y="456" text-anchor="middle" fill="#a1a1aa" font-size="11.5">Jest eşleme editörü (config.json)</text>
+        <text x="777" y="476" text-anchor="middle" fill="#a1a1aa" font-size="11.5">Hassasiyet kalibrasyon slider'ları</text>
+        <!-- Arrows down -->
+        <line x1="700" y1="220" x2="220" y2="372" stroke="#39ff14" stroke-width="2" marker-end="url(#arr)"/>
+        <line x1="760" y1="220" x2="500" y2="372" stroke="#39ff14" stroke-width="2" marker-end="url(#arr)"/>
+        <line x1="790" y1="220" x2="780" y2="372" stroke="#39ff14" stroke-width="2" marker-end="url(#arr)"/>
+      </svg>
+    </div>
+    <pre><span class="c"># Histerezisli pinch algılamanın özü — gesture_engine.py</span>
+hand_scale = dist(bilek, orta_mcp)                  <span class="c"># el boyutuna normalizasyon</span>
+ratio = dist(başparmak_ucu, parmak_ucu) / hand_scale
+
+<span class="g">if</span> ratio &lt; 0.40:  <span class="c"># kapanma eşiği  → pinch BAŞLAR</span>
+    ...
+<span class="g">if</span> ratio &gt; 0.60:  <span class="c"># açılma eşiği   → pinch BİTER (aradaki bölge = histerezis)</span>
+    tap / swipe / karusel kapanışı çözümlenir</pre>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="kicker">Retrospektif</div>
+    <h2>Dürüst sonuç: deney ne öğretti?</h2>
+    <div class="verdict">
+      <p><strong>Hipotez:</strong> Webcam jestleri, laptop'ta klavye/touchpad'e ergonomik bir
+      alternatif olabilir mi?</p>
+      <p><strong>Sonuç: Hayır — ve bunun nedeni mühendislik değil, fizik.</strong> Klavye kısayolu
+      her koşulda ~200ms'de tamamlanır. Kamera gecikmesi + model çıkarımı + ışık bağımlılığı
+      zinciri, en iyi günde bile bu çıtaya ancak yaklaşır; kötü ışıkta tutarlılığını kaybeder.
+      Eli klavyeden kaldırıp jest yapmak, kısayola basmaktan daha fazla efor ister — yani
+      sağlıklı bir kullanıcı için değer önerisi negatife döner.</p>
+      <p><strong>Teknolojinin gerçek adresi erişilebilirlik.</strong> Google Project Gameface'in de
+      hedeflediği gibi bu sistemler "klavyeye alternatif" değil, <em>klavye kullanamayanlara
+      klavye</em>dir. V4'ün yüz modu (blendshape → kısayol) bu senaryoda gerçekten anlamlıdır.</p>
+      <p><strong>Taşınan kazanımlar:</strong> histerezisli jest durum makineleri tasarımı,
+      MediaPipe Tasks API entegrasyonu (el + yüz eş zamanlı), Win32 input simülasyonu ve global
+      hotkey yönetimi, click-through overlay pencereler, kamera FOV pazarlığı (4:3 kırpma tuzağı)
+      ve en önemlisi: <em>bir HCI fikrini araştırma literatürüyle doğrulayıp dört sürümde
+      sistematik olarak test etme</em> deneyimi.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="kicker">Deneyin</div>
+    <h2>Kurulum</h2>
+    <pre><span class="c"># Windows 10/11 · Python 3.10+ · herhangi bir webcam</span>
+git clone https://github.com/safaeren777-collab/antigravity.git
+cd antigravity
+pip install -r requirements.txt
+python main.py
+
+<span class="c"># Ctrl+Space        → el takibini aç/kapat</span>
+<span class="c"># Ctrl+Shift+Space  → yüz modunu aç/kapat</span></pre>
+    <p style="color:var(--dim); font-size:13px; margin-top:14px;">
+      MediaPipe model dosyaları (<span class="key">hand_landmarker.task</span>,
+      <span class="key">face_landmarker.task</span>) repoda hazır gelir; ek indirme gerekmez.
+    </p>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    Antigravity V4 · Safa Eren Kavak · MIT Lisansı ·
+    <a href="https://github.com/safaeren777-collab/antigravity">GitHub</a>
+  </div>
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,17 @@
+# Whitelist yaklaşımı: her şey yasak, sadece uygulama dosyaları repoya girer.
+# (Bu klasörde repo dışı kişisel dosyalar da bulunduğu için güvenli yöntem.)
+*
+!.gitignore
+!README.md
+!index.html
+!requirements.txt
+!main.py
+!gesture_engine.py
+!action_executor.py
+!overlay_window.py
+!settings_window.py
+!hotkey_listener.py
+!config.json
+!antigravity.ico
+!hand_landmarker.task
+!face_landmarker.task

@@ -1,0 +1,85 @@
+{
+  "camera_index": 0,
+  "smoothing_factor": 0.5,
+  "pinch_close_ratio": 0.4,
+  "tap_max_ms": 250,
+  "drag_threshold_px": 40,
+  "scroll_speed": 0.8,
+  "carousel_step_px": 70,
+  "face_threshold": 0.5,
+  "face_hold_ms": 250,
+  "hotkey": "Ctrl+Space",
+  "face_hotkey": "Ctrl+Shift+Space",
+  "tracking_enabled": true,
+  "face_mode_enabled": false,
+  "pinch_taps": {
+    "INDEX": {
+      "label": "Onay / Enter",
+      "key": "enter"
+    },
+    "MIDDLE": {
+      "label": "Yeni Sekme",
+      "key": "ctrl+t"
+    },
+    "RING": {
+      "label": "Kopyala",
+      "key": "ctrl+c"
+    },
+    "PINKY": {
+      "label": "Yapıştır",
+      "key": "ctrl+v"
+    }
+  },
+  "swipe_actions": {
+    "MIDDLE_UP": {
+      "label": "Görev Görünümü",
+      "key": "win+tab"
+    },
+    "MIDDLE_DOWN": {
+      "label": "Masaüstünü Göster",
+      "key": "win+d"
+    },
+    "RING_LEFT": {
+      "label": "Geri",
+      "key": "alt+left"
+    },
+    "RING_RIGHT": {
+      "label": "İleri",
+      "key": "alt+right"
+    },
+    "RING_UP": {
+      "label": "Pencereyi Büyüt",
+      "key": "win+up"
+    },
+    "RING_DOWN": {
+      "label": "Sekme Kapat",
+      "key": "ctrl+w"
+    }
+  },
+  "face_actions": {
+    "BROW_RAISE": {
+      "label": "Uygulama Değiştir",
+      "key": "alt+tab"
+    },
+    "JAW_OPEN": {
+      "label": "Oynat / Duraklat",
+      "key": "playpause"
+    },
+    "MOUTH_PUCKER": {
+      "label": "Masaüstünü Göster",
+      "key": "win+d"
+    },
+    "SMILE": {
+      "label": "",
+      "key": ""
+    },
+    "WINK_LEFT": {
+      "label": "Geri",
+      "key": "alt+left"
+    },
+    "WINK_RIGHT": {
+      "label": "İleri",
+      "key": "alt+right"
+    }
+  }
+}
