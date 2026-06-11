@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Antigravity V4 — Pinch Tabanlı Temassız PC Kontrolü</title>
-<meta name="description" content="Webcam'i temassız giriş cihazına dönüştüren deneysel sistem: MediaPipe el/yüz takibi, histerezisli pinch durum makinesi, Alt-Tab karuseli ve yüz ifadesi kısayolları.">
+<title>AirMouse V4 — Pinch-Based Touchless PC Control</title>
+<meta name="description" content="An experiment that turns a webcam into a touchless input device: MediaPipe hand/face tracking, a hysteresis-based pinch state machine, an Alt-Tab carousel and facial-expression shortcuts.">
 <style>
   :root {
     --bg: #0c0c0e;
@@ -90,6 +90,8 @@
   .card h3 { font-size: 16px; margin-bottom: 8px; color: var(--text); }
   .card p { font-size: 14px; color: var(--muted); }
   .card .num { color: var(--neon); font-weight: 900; font-size: 13px; letter-spacing: 1px; }
+  .card.ml { border-color: rgba(217,70,239,.35); }
+  .card.ml .num { color: var(--magenta); }
   .accent { color: var(--neon); font-weight: 600; }
   .accent-m { color: var(--magenta); font-weight: 600; }
 
@@ -105,6 +107,7 @@
     background: var(--bg-soft); border: 1px solid var(--border-soft);
     border-radius: 5px; padding: 2px 8px; color: var(--neon);
   }
+  .key-m { color: var(--magenta); }
 
   /* ARCHITECTURE DIAGRAM */
   .diagram { margin-top: 30px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 18px; }
@@ -140,94 +143,163 @@
 
 <header>
   <div class="wrap">
-    <div class="badge">DENEY TAMAMLANDI · SORUSU CEVAPLANDI · ARŞİV</div>
-    <h1>ANTIGRAVITY V4</h1>
-    <div class="subtitle">Pinch Tabanlı Temassız PC Kontrol Sistemi</div>
+    <div class="badge">EXPERIMENT COMPLETE · QUESTION ANSWERED · ARCHIVED</div>
+    <h1>AIRMOUSE V4</h1>
+    <div class="subtitle">Pinch-Based Touchless PC Control System</div>
     <p class="tagline">
-      Sıradan bir webcam'i tıklama, kaydırma, pencere yönetimi ve kısayol tetikleme yapabilen
-      temassız bir giriş cihazına dönüştüren deneysel sistem.
+      An experimental system that turns an ordinary webcam into a touchless input device
+      capable of clicking, scrolling, window management and shortcut triggering.
       Python · PyQt6 · MediaPipe · Win32 API
     </p>
     <div class="hero-links">
-      <a class="btn btn-primary" href="https://github.com/safaeren777-collab/antigravity">Kaynak Kodu (GitHub)</a>
-      <a class="btn btn-ghost" href="#mimari">Mimariyi İncele ↓</a>
+      <a class="btn btn-primary" href="https://github.com/safaeren777-collab/airmouse">Source Code (GitHub)</a>
+      <a class="btn btn-ghost" href="#ml">How the ML Works ↓</a>
     </div>
   </div>
 </header>
 
 <section>
   <div class="wrap">
-    <div class="kicker">Problem</div>
-    <h2>Havada imleç kontrolü neden başarısız olur?</h2>
+    <div class="kicker">The Problem</div>
+    <h2>Why does mid-air cursor control fail?</h2>
     <p class="lead">
-      Projenin ilk üç sürümü klasik yaklaşımı denedi: el konumunu imlece eşle, statik el pozlarını
-      (açık avuç, yumruk, barış işareti) komutlara bağla. İki yapısal sorunla karşılaştık:
+      The first three versions tried the classic approach: map hand position to a cursor and bind
+      static hand poses (open palm, fist, peace sign) to commands. Two structural problems emerged:
     </p>
     <div class="grid grid-2">
       <div class="card">
-        <h3>🦍 Gorilla Arm Sendromu</h3>
-        <p>Kolu havada tutarak yapılan hassas hareketler dakikalar içinde yorar. HCI literatüründe
-        iyi belgelenmiş bu sorunun çözümü büyük jestler değil, kolun dinlendiği pozisyondan
-        yapılabilen <span class="accent">küçük, desteklenmiş hareketler</span>dir.</p>
+        <h3>🦍 Gorilla Arm Syndrome</h3>
+        <p>Precise movements with an arm held in the air become exhausting within minutes. The fix,
+        well documented in HCI research, is not bigger gestures but
+        <span class="accent">small, supported movements</span> performed from a resting position.</p>
       </div>
       <div class="card">
-        <h3>📳 Jest Titremesi</h3>
-        <p>Statik poz sınıflandırması kare kare değişir. Tek eşikli sistemde "açık avuç" komutu
-        sürekli açılıp iptal olur — V3 loglarında aynı saniyede defalarca
-        <i>activated → cancelled</i> döngüsü görülüyordu. Çözüm:
-        <span class="accent">histerezis + durum makinesi</span>.</p>
+        <h3>📳 Gesture Flicker</h3>
+        <p>Static pose classification changes frame to frame. With a single threshold, an
+        "open palm" command keeps opening and cancelling — V3 logs showed repeated
+        <i>activated → cancelled</i> loops within the same second. The fix:
+        <span class="accent">hysteresis + a state machine</span>.</p>
       </div>
     </div>
   </div>
 </section>
 
+<section id="ml">
+  <div class="wrap">
+    <div class="kicker">Machine Learning</div>
+    <h2>How the ML is actually used</h2>
+    <p class="lead">
+      AirMouse runs <b>two on-device neural networks per frame</b> through Google's MediaPipe
+      Tasks API — no cloud, no GPU required (GPU delegate is attempted, with automatic CPU
+      fallback). The interesting part is what sits <em>on top</em> of them.
+    </p>
+    <div class="grid grid-2">
+      <div class="card ml">
+        <div class="num">MODEL 1 · HAND LANDMARKER</div>
+        <h3>21 keypoints, two-stage CNN</h3>
+        <p>A single-shot palm <b>detector</b> network localizes the hand, then a landmark
+        <b>regression</b> network predicts 21 3D keypoints (fingertips, joints, wrist).
+        Running in <span class="key key-m">VIDEO</span> mode exploits temporal coherence:
+        the expensive detector only re-runs when tracking confidence drops, which keeps
+        the whole pipeline at ~30 FPS on a laptop CPU.</p>
+      </div>
+      <div class="card ml">
+        <div class="num">MODEL 2 · FACE LANDMARKER</div>
+        <h3>478-point mesh + 52 blendshapes</h3>
+        <p>Regresses a dense 3D face mesh <b>plus 52 blendshape coefficients</b> —
+        ARKit-compatible expression weights such as <span class="key key-m">browInnerUp</span>,
+        <span class="key key-m">jawOpen</span>, <span class="key key-m">eyeBlinkLeft</span> —
+        each a continuous 0–1 score of how strongly the user performs that expression.</p>
+      </div>
+    </div>
+
+    <div class="grid grid-3">
+      <div class="card">
+        <div class="num">DESIGN CHOICE</div>
+        <h3>Geometry over classifiers</h3>
+        <p>We deliberately did <b>not</b> train an end-to-end gesture classifier. Raw landmarks feed
+        hand-engineered features: thumb-to-fingertip distance <b>normalized by hand scale</b>
+        (wrist → middle-finger MCP), making detection invariant to hand size and camera distance.
+        No training data, fully debuggable — every trigger is a number crossing a threshold.</p>
+      </div>
+      <div class="card">
+        <div class="num">NOISE → EVENTS</div>
+        <h3>Hysteresis state machine</h3>
+        <p>Per-frame neural predictions are noisy. A hysteresis band (pinch <b>engages</b> below
+        ratio 0.40, <b>releases</b> only above 0.60) plus a state machine
+        (IDLE → PINCHED → TAP / SCROLL / CAROUSEL / SWIPE) converts that noise into clean,
+        discrete events. This is what fixed V3's flicker.</p>
+      </div>
+      <div class="card">
+        <div class="num">FALSE-POSITIVE FILTERS</div>
+        <h3>Temporal validation</h3>
+        <p>Blendshapes pass threshold + <b>250 ms minimum hold</b> (a natural blink lasts ~150 ms,
+        so blinks never fire) + a refractory period + cross-checks: a wink only counts if the
+        <em>other</em> eye is open. Pinch midpoints are EMA-smoothed before drag distances are
+        measured; a fist is rejected when two fingertips are both in pinch range.</p>
+      </div>
+    </div>
+
+    <pre><span class="c"># The core of hysteresis-based pinch detection — gesture_engine.py</span>
+hand_scale = dist(wrist, middle_mcp)              <span class="c"># normalize by hand size</span>
+ratio = dist(thumb_tip, finger_tip) / hand_scale
+
+<span class="g">if</span> ratio &lt; 0.40:  <span class="c"># engage threshold  → pinch STARTS</span>
+    ...
+<span class="g">if</span> ratio &gt; 0.60:  <span class="c"># release threshold → pinch ENDS (the gap = hysteresis)</span>
+    resolve tap / swipe / carousel close</pre>
+  </div>
+</section>
+
 <section>
   <div class="wrap">
-    <div class="kicker">Çözüm</div>
-    <h2>Pinch: havadaki dokunma anı</h2>
+    <div class="kicker">The Solution</div>
+    <h2>Pinch: a touch-down moment in mid-air</h2>
     <p class="lead">
-      V4, Apple Vision Pro'nun da benimsediği modeli webcam'e taşır: imleç yok, ayrık komutlar var.
-      Temel birim <b>pinch</b> (başparmak + parmak ucu teması) — çünkü tek bir mesafe ölçümüyle,
-      el boyutuna normalize edilerek son derece güvenilir algılanır.
+      V4 brings the model Apple Vision Pro also adopted to the webcam: no cursor, only discrete
+      commands. The primitive is the <b>pinch</b> (thumb + fingertip contact) — a single distance
+      measurement that detects with extreme reliability.
     </p>
     <div class="grid grid-3">
       <div class="card">
-        <div class="num">01 · HİSTEREZİS</div>
-        <h3>Çift eşikli algılama</h3>
-        <p>Pinch, normalize mesafe <span class="key">0.40</span>'ın altına inince başlar ama ancak
-        <span class="key">0.60</span>'ın üstüne çıkınca biter. Aradaki bölge titremeyi yapısal olarak yok eder.</p>
+        <div class="num">01 · TOUCHPAD METAPHOR</div>
+        <h3>Pinch = touch</h3>
+        <p>What makes a laptop touchpad comfortable is that touching marks the start/end of every
+        gesture. The pinch plays the same role in the air: <b>pinch → drag → release</b>.</p>
       </div>
       <div class="card">
-        <div class="num">02 · TOUCHPAD METAFORU</div>
-        <h3>Pinch = dokunma</h3>
-        <p>Laptop touchpad'inin rahatlığının sırrı, dokunuşun jestin başını/sonunu netleştirmesidir.
-        Pinch aynı görevi havada üstlenir: <b>pinch yap → sürükle → bırak</b>.</p>
+        <div class="num">02 · TAP / HOLD / DRAG</div>
+        <h3>Three events from one gesture</h3>
+        <p>Short pinch = tap (shortcut). Pinch + drag = a mode (scroll, carousel, swipe).
+        Which finger pinches selects the command palette: 4 fingers = 4 separate "buttons".</p>
       </div>
       <div class="card">
-        <div class="num">03 · TAP / HOLD / DRAG</div>
-        <h3>Tek jestten üç olay</h3>
-        <p>Kısa pinch = dokunuş (kısayol). Pinch + sürükleme = mod (scroll, karusel, swipe).
-        Hangi parmağın pinch yaptığı komut paletini belirler: 4 parmak = 4 ayrı "buton".</p>
+        <div class="num">03 · ALT-TAB CAROUSEL</div>
+        <h3>Hold, sweep, release</h3>
+        <p>Middle pinch + horizontal drag physically holds Alt; sweeping left/right walks through
+        windows, releasing the pinch selects one. A guaranteed
+        <span class="key">release_all()</span> on every exit path means Alt can never get stuck.</p>
       </div>
       <div class="card">
-        <div class="num">04 · ALT-TAB KARUSELİ</div>
-        <h3>Tut, gez, bırak</h3>
-        <p>Orta pinch + yatay sürükleme Alt'ı fiziksel olarak basılı tutar; el sağa/sola gezdikçe
-        pencere seçilir, pinch bırakılınca açılır. Alt tuşunun asılı kalmaması her çıkış yolunda
-        <span class="key">release_all()</span> ile garanti edilir.</p>
+        <div class="num">04 · FULL FIELD OF VIEW</div>
+        <h3>The 4:3 crop trap</h3>
+        <p>Forcing 640x480 (4:3) makes 16:9 webcam sensors crop the sides of the image. The camera
+        is opened at MJPG 1280x720 and downscaled to 640px for processing — full FOV at the same
+        CPU cost.</p>
       </div>
       <div class="card">
-        <div class="num">05 · BELİRSİZLİK KORUMASI</div>
-        <h3>Yumruk ≠ pinch</h3>
-        <p>En yakın iki parmak ucu da pinch eşiğindeyse (yumruk yapılıyordur) jest reddedilir.
-        El ekrana ilk girdiğinde 300ms stabilizasyon süresi beklenir.</p>
+        <div class="num">05 · THREADED PIPELINE</div>
+        <h3>Signals, not blocking</h3>
+        <p>Vision runs in its own QThread; gesture events cross to the main thread as Qt signals
+        where input simulation happens. The camera loop is never blocked by the GUI or the
+        keyboard simulator.</p>
       </div>
       <div class="card">
-        <div class="num">06 · YÜZ MODU</div>
-        <h3 class="accent-m">Eller tamamen serbest</h3>
-        <p>MediaPipe'ın 52 blendshape katsayısı eşik + tutma süresiyle kısayollara bağlanır.
-        Tutma süresi (250ms) normal göz kırpmayı (~150ms) eler; wink için tek-göz şartı aranır.
-        Eller klavyedeyken bile çalışır.</p>
+        <div class="num">06 · FACE MODE</div>
+        <h3 class="accent-m">Completely hands-free</h3>
+        <p>Blendshape coefficients map to shortcuts — raise eyebrows for Alt-Tab, open mouth for
+        Play/Pause, wink for Back/Forward. Works even while both hands stay on the keyboard.
+        Toggled separately with <span class="key">Ctrl+Shift+Space</span>.</p>
       </div>
     </div>
   </div>
@@ -235,35 +307,35 @@
 
 <section>
   <div class="wrap">
-    <div class="kicker">Jest Paleti</div>
-    <h2>Varsayılan eşlemeler</h2>
+    <div class="kicker">Gesture Palette</div>
+    <h2>Default mappings</h2>
     <table>
-      <tr><th>Jest</th><th>Tür</th><th>İşlev</th></tr>
-      <tr><td>🤏 İşaret pinch</td><td>Tak</td><td>Onay / <span class="key">enter</span></td></tr>
-      <tr><td>🤏 İşaret pinch</td><td>Tut + sürükle</td><td>Sürekli scroll — anchor'dan uzaklık = hız (joystick mantığı)</td></tr>
-      <tr><td>🤏 Orta pinch</td><td>Yatay sürükle</td><td>Alt-Tab karuseli (bırakınca pencere seçilir)</td></tr>
-      <tr><td>🤏 Orta pinch</td><td>Dikey sürükle</td><td>Görev Görünümü <span class="key">win+tab</span> / Masaüstü <span class="key">win+d</span></td></tr>
-      <tr><td>🤏 Yüzük pinch</td><td>4 yön sürükle</td><td>Geri <span class="key">alt+left</span> · İleri <span class="key">alt+right</span> · Büyüt <span class="key">win+up</span> · Sekme Kapat <span class="key">ctrl+w</span></td></tr>
-      <tr><td>🤏 Orta / Yüzük / Serçe</td><td>Tak</td><td>Yeni Sekme <span class="key">ctrl+t</span> · Kopyala <span class="key">ctrl+c</span> · Yapıştır <span class="key">ctrl+v</span></td></tr>
-      <tr><td>🤨 Kaş kaldırma</td><td>Yüz modu</td><td>Uygulama değiştir <span class="key">alt+tab</span></td></tr>
-      <tr><td>😮 Ağız açma</td><td>Yüz modu</td><td>Oynat / Duraklat <span class="key">playpause</span></td></tr>
-      <tr><td>😉 Sol / sağ göz kırpma</td><td>Yüz modu</td><td>Geri / İleri</td></tr>
+      <tr><th>Gesture</th><th>Type</th><th>Action</th></tr>
+      <tr><td>🤏 Index pinch</td><td>Tap</td><td>Confirm / <span class="key">enter</span></td></tr>
+      <tr><td>🤏 Index pinch</td><td>Hold + drag</td><td>Continuous scroll — distance from anchor = speed (joystick logic)</td></tr>
+      <tr><td>🤏 Middle pinch</td><td>Horizontal drag</td><td>Alt-Tab carousel (release to switch windows)</td></tr>
+      <tr><td>🤏 Middle pinch</td><td>Vertical drag</td><td>Task View <span class="key">win+tab</span> / Show Desktop <span class="key">win+d</span></td></tr>
+      <tr><td>🤏 Ring pinch</td><td>4-way drag</td><td>Back <span class="key">alt+left</span> · Forward <span class="key">alt+right</span> · Maximize <span class="key">win+up</span> · Close Tab <span class="key">ctrl+w</span></td></tr>
+      <tr><td>🤏 Middle / Ring / Pinky</td><td>Tap</td><td>New Tab <span class="key">ctrl+t</span> · Copy <span class="key">ctrl+c</span> · Paste <span class="key">ctrl+v</span></td></tr>
+      <tr><td>🤨 Eyebrow raise</td><td>Face mode</td><td>Switch app <span class="key">alt+tab</span></td></tr>
+      <tr><td>😮 Mouth open</td><td>Face mode</td><td>Play / Pause <span class="key">playpause</span></td></tr>
+      <tr><td>😉 Left / right wink</td><td>Face mode</td><td>Back / Forward</td></tr>
     </table>
     <p style="color:var(--dim); font-size:13px; margin-top:14px;">
-      Tüm eşlemeler ayarlar panelinden değiştirilebilir. Kısayol alanına <span class="key">app:</span>
-      öneki yazılırsa uygulama başlatılır (örn. <span class="key">app:spotify:</span>).
+      Every mapping is editable in the settings panel. Prefixing a shortcut with
+      <span class="key">app:</span> launches an application instead (e.g. <span class="key">app:spotify:</span>).
     </p>
   </div>
 </section>
 
-<section id="mimari">
+<section id="architecture">
   <div class="wrap">
-    <div class="kicker">Mimari</div>
-    <h2>Sinyal tabanlı, çok iş parçacıklı tasarım</h2>
+    <div class="kicker">Architecture</div>
+    <h2>Signal-driven, multi-threaded design</h2>
     <p class="lead">
-      Görüntü işleme ayrı bir QThread'de koşar; jest olayları Qt sinyalleriyle ana iş parçacığına
-      taşınır, input simülasyonu orada yapılır. Böylece kamera döngüsü hiçbir zaman GUI veya
-      klavye simülasyonu tarafından bloklanmaz.
+      Vision processing runs in a dedicated QThread; gesture events travel to the main thread as
+      Qt signals, where input simulation happens. The camera loop is never blocked by the GUI or
+      keyboard simulation.
     </p>
     <div class="diagram">
       <svg viewBox="0 0 960 560" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI, sans-serif">
@@ -280,106 +352,101 @@
         <rect x="240" y="20" width="300" height="240" rx="12" fill="#121215" stroke="#39ff14" stroke-width="1.5"/>
         <text x="390" y="50" text-anchor="middle" fill="#39ff14" font-size="15" font-weight="800">GestureEngine (QThread)</text>
         <rect x="260" y="66" width="260" height="38" rx="7" fill="#1a1a20" stroke="#2d2d34"/>
-        <text x="390" y="90" text-anchor="middle" fill="#d4d4d8" font-size="12">MediaPipe HandLandmarker (21 nokta)</text>
+        <text x="390" y="90" text-anchor="middle" fill="#d4d4d8" font-size="12">MediaPipe HandLandmarker (21 points)</text>
         <rect x="260" y="112" width="260" height="38" rx="7" fill="#1a1a20" stroke="#2d2d34"/>
-        <text x="390" y="136" text-anchor="middle" fill="#d4d4d8" font-size="12">Pinch Durum Makinesi (histerezis)</text>
+        <text x="390" y="136" text-anchor="middle" fill="#d4d4d8" font-size="12">Pinch state machine (hysteresis)</text>
         <rect x="260" y="158" width="260" height="38" rx="7" fill="#1a1a20" stroke="#2d2d34"/>
-        <text x="390" y="182" text-anchor="middle" fill="#d4d4d8" font-size="12">MediaPipe FaceLandmarker (52 blendshape)</text>
+        <text x="390" y="182" text-anchor="middle" fill="#d4d4d8" font-size="12">MediaPipe FaceLandmarker (52 blendshapes)</text>
         <rect x="260" y="204" width="260" height="38" rx="7" fill="#1a1a20" stroke="#2d2d34"/>
-        <text x="390" y="228" text-anchor="middle" fill="#d4d4d8" font-size="12">İfade Durum Makinesi (eşik + tutma)</text>
+        <text x="390" y="228" text-anchor="middle" fill="#d4d4d8" font-size="12">Expression state machine (threshold + hold)</text>
         <!-- Main -->
         <rect x="630" y="60" width="300" height="160" rx="12" fill="#121215" stroke="#39ff14" stroke-width="1.5"/>
-        <text x="780" y="90" text-anchor="middle" fill="#39ff14" font-size="15" font-weight="800">main.py (Qt Ana Thread)</text>
-        <text x="780" y="118" text-anchor="middle" fill="#a1a1aa" font-size="12">Sinyal yönlendirme · config yönetimi</text>
-        <text x="780" y="140" text-anchor="middle" fill="#a1a1aa" font-size="12">Sistem tepsisi · mod durumları</text>
+        <text x="780" y="90" text-anchor="middle" fill="#39ff14" font-size="15" font-weight="800">main.py (Qt main thread)</text>
+        <text x="780" y="118" text-anchor="middle" fill="#a1a1aa" font-size="12">Signal routing · config management</text>
+        <text x="780" y="140" text-anchor="middle" fill="#a1a1aa" font-size="12">System tray · mode states</text>
         <rect x="650" y="158" width="260" height="40" rx="7" fill="#1a1a20" stroke="#2d2d34"/>
         <text x="780" y="183" text-anchor="middle" fill="#d4d4d8" font-size="12">HotkeyListener — Win32 RegisterHotKey</text>
         <!-- Arrows top -->
         <line x1="170" y1="79" x2="232" y2="79" stroke="#39ff14" stroke-width="2" marker-end="url(#arr)"/>
         <line x1="540" y1="140" x2="622" y2="140" stroke="#39ff14" stroke-width="2" marker-end="url(#arr)"/>
-        <text x="581" y="120" text-anchor="middle" fill="#39ff14" font-size="11" font-weight="700">Qt Sinyalleri</text>
+        <text x="581" y="120" text-anchor="middle" fill="#39ff14" font-size="11" font-weight="700">Qt signals</text>
         <text x="581" y="160" text-anchor="middle" fill="#71717a" font-size="10">pinch_tap · swipe · scroll_delta</text>
         <text x="581" y="174" text-anchor="middle" fill="#71717a" font-size="10">carousel · face_triggered</text>
         <!-- Bottom row -->
         <rect x="60" y="380" width="255" height="130" rx="12" fill="#121215" stroke="#2d2d34"/>
         <text x="187" y="410" text-anchor="middle" fill="#f4f4f5" font-size="14" font-weight="800">ActionExecutor</text>
-        <text x="187" y="436" text-anchor="middle" fill="#a1a1aa" font-size="11.5">pyautogui kısayolları · app: başlatıcı</text>
-        <text x="187" y="456" text-anchor="middle" fill="#a1a1aa" font-size="11.5">Win32 mouse_event ham scroll</text>
+        <text x="187" y="436" text-anchor="middle" fill="#a1a1aa" font-size="11.5">pyautogui hotkeys · app: launcher</text>
+        <text x="187" y="456" text-anchor="middle" fill="#a1a1aa" font-size="11.5">Win32 mouse_event raw scroll</text>
         <text x="187" y="476" text-anchor="middle" fill="#a1a1aa" font-size="11.5">Alt-Tab keyDown/keyUp + release_all()</text>
         <rect x="355" y="380" width="255" height="130" rx="12" fill="#121215" stroke="#2d2d34"/>
         <text x="482" y="410" text-anchor="middle" fill="#f4f4f5" font-size="14" font-weight="800">OverlayWindow</text>
-        <text x="482" y="436" text-anchor="middle" fill="#a1a1aa" font-size="11.5">Click-through şeffaf HUD (Win32)</text>
-        <text x="482" y="456" text-anchor="middle" fill="#a1a1aa" font-size="11.5">Mod pili: SCROLL / UYGULAMA GEÇİŞİ</text>
-        <text x="482" y="476" text-anchor="middle" fill="#a1a1aa" font-size="11.5">Kısayol toast bildirimleri</text>
+        <text x="482" y="436" text-anchor="middle" fill="#a1a1aa" font-size="11.5">Click-through transparent HUD (Win32)</text>
+        <text x="482" y="456" text-anchor="middle" fill="#a1a1aa" font-size="11.5">Mode pill: SCROLL / APP SWITCH</text>
+        <text x="482" y="476" text-anchor="middle" fill="#a1a1aa" font-size="11.5">Shortcut toast notifications</text>
         <rect x="650" y="380" width="255" height="130" rx="12" fill="#121215" stroke="#2d2d34"/>
         <text x="777" y="410" text-anchor="middle" fill="#f4f4f5" font-size="14" font-weight="800">SettingsWindow</text>
-        <text x="777" y="436" text-anchor="middle" fill="#a1a1aa" font-size="11.5">Canlı kamera telemetrisi</text>
-        <text x="777" y="456" text-anchor="middle" fill="#a1a1aa" font-size="11.5">Jest eşleme editörü (config.json)</text>
-        <text x="777" y="476" text-anchor="middle" fill="#a1a1aa" font-size="11.5">Hassasiyet kalibrasyon slider'ları</text>
+        <text x="777" y="436" text-anchor="middle" fill="#a1a1aa" font-size="11.5">Live camera telemetry</text>
+        <text x="777" y="456" text-anchor="middle" fill="#a1a1aa" font-size="11.5">Gesture mapping editor (config.json)</text>
+        <text x="777" y="476" text-anchor="middle" fill="#a1a1aa" font-size="11.5">Sensitivity calibration sliders</text>
         <!-- Arrows down -->
         <line x1="700" y1="220" x2="220" y2="372" stroke="#39ff14" stroke-width="2" marker-end="url(#arr)"/>
         <line x1="760" y1="220" x2="500" y2="372" stroke="#39ff14" stroke-width="2" marker-end="url(#arr)"/>
         <line x1="790" y1="220" x2="780" y2="372" stroke="#39ff14" stroke-width="2" marker-end="url(#arr)"/>
       </svg>
     </div>
-    <pre><span class="c"># Histerezisli pinch algılamanın özü — gesture_engine.py</span>
-hand_scale = dist(bilek, orta_mcp)                  <span class="c"># el boyutuna normalizasyon</span>
-ratio = dist(başparmak_ucu, parmak_ucu) / hand_scale
-
-<span class="g">if</span> ratio &lt; 0.40:  <span class="c"># kapanma eşiği  → pinch BAŞLAR</span>
-    ...
-<span class="g">if</span> ratio &gt; 0.60:  <span class="c"># açılma eşiği   → pinch BİTER (aradaki bölge = histerezis)</span>
-    tap / swipe / karusel kapanışı çözümlenir</pre>
   </div>
 </section>
 
 <section>
   <div class="wrap">
-    <div class="kicker">Retrospektif</div>
-    <h2>Dürüst sonuç: deney ne öğretti?</h2>
+    <div class="kicker">Retrospective</div>
+    <h2>The honest conclusion: what did the experiment teach?</h2>
     <div class="verdict">
-      <p><strong>Hipotez:</strong> Webcam jestleri, laptop'ta klavye/touchpad'e ergonomik bir
-      alternatif olabilir mi?</p>
-      <p><strong>Sonuç: Hayır — ve bunun nedeni mühendislik değil, fizik.</strong> Klavye kısayolu
-      her koşulda ~200ms'de tamamlanır. Kamera gecikmesi + model çıkarımı + ışık bağımlılığı
-      zinciri, en iyi günde bile bu çıtaya ancak yaklaşır; kötü ışıkta tutarlılığını kaybeder.
-      Eli klavyeden kaldırıp jest yapmak, kısayola basmaktan daha fazla efor ister — yani
-      sağlıklı bir kullanıcı için değer önerisi negatife döner.</p>
-      <p><strong>Teknolojinin gerçek adresi erişilebilirlik.</strong> Google Project Gameface'in de
-      hedeflediği gibi bu sistemler "klavyeye alternatif" değil, <em>klavye kullanamayanlara
-      klavye</em>dir. V4'ün yüz modu (blendshape → kısayol) bu senaryoda gerçekten anlamlıdır.</p>
-      <p><strong>Taşınan kazanımlar:</strong> histerezisli jest durum makineleri tasarımı,
-      MediaPipe Tasks API entegrasyonu (el + yüz eş zamanlı), Win32 input simülasyonu ve global
-      hotkey yönetimi, click-through overlay pencereler, kamera FOV pazarlığı (4:3 kırpma tuzağı)
-      ve en önemlisi: <em>bir HCI fikrini araştırma literatürüyle doğrulayıp dört sürümde
-      sistematik olarak test etme</em> deneyimi.</p>
+      <p><strong>Hypothesis:</strong> Can webcam gestures be an ergonomic alternative to the
+      keyboard and touchpad on a laptop?</p>
+      <p><strong>Answer: No — and the reason is physics, not engineering.</strong> A keyboard
+      shortcut completes in ~200 ms under every condition. The chain of camera latency + model
+      inference + lighting dependency only approaches that bar on its best day and loses
+      consistency in bad light. Lifting a hand off the keyboard to gesture costs more effort
+      than pressing the shortcut — so for an able-bodied user, the value proposition turns
+      negative.</p>
+      <p><strong>The real home of this technology is accessibility.</strong> As Google's Project
+      Gameface also targets, these systems are not an <em>alternative to</em> the keyboard —
+      they are <em>a keyboard for those who cannot use one</em>. V4's face mode
+      (blendshape → shortcut) is genuinely meaningful in that scenario.</p>
+      <p><strong>What carries forward:</strong> designing hysteresis-based gesture state machines,
+      integrating the MediaPipe Tasks API (hand + face concurrently), Win32 input simulation and
+      global hotkey management, click-through overlay windows, camera FOV negotiation (the 4:3
+      crop trap) — and above all, the experience of validating an HCI idea against research
+      literature and testing it systematically across four versions.</p>
     </div>
   </div>
 </section>
 
 <section>
   <div class="wrap">
-    <div class="kicker">Deneyin</div>
-    <h2>Kurulum</h2>
-    <pre><span class="c"># Windows 10/11 · Python 3.10+ · herhangi bir webcam</span>
-git clone https://github.com/safaeren777-collab/antigravity.git
-cd antigravity
+    <div class="kicker">Try It</div>
+    <h2>Installation</h2>
+    <pre><span class="c"># Windows 10/11 · Python 3.10+ · any webcam</span>
+git clone https://github.com/safaeren777-collab/airmouse.git
+cd airmouse
 pip install -r requirements.txt
 python main.py
 
-<span class="c"># Ctrl+Space        → el takibini aç/kapat</span>
-<span class="c"># Ctrl+Shift+Space  → yüz modunu aç/kapat</span></pre>
+<span class="c"># Ctrl+Space        → toggle hand tracking</span>
+<span class="c"># Ctrl+Shift+Space  → toggle face mode</span></pre>
     <p style="color:var(--dim); font-size:13px; margin-top:14px;">
-      MediaPipe model dosyaları (<span class="key">hand_landmarker.task</span>,
-      <span class="key">face_landmarker.task</span>) repoda hazır gelir; ek indirme gerekmez.
+      The MediaPipe model files (<span class="key">hand_landmarker.task</span>,
+      <span class="key">face_landmarker.task</span>) ship with the repo — no extra downloads.
+      Note: the in-app UI text is currently in Turkish.
     </p>
   </div>
 </section>
 
 <footer>
   <div class="wrap">
-    Antigravity V4 · Safa Eren Kavak · MIT Lisansı ·
-    <a href="https://github.com/safaeren777-collab/antigravity">GitHub</a>
+    AirMouse V4 · Safa Eren Kavak · MIT License ·
+    <a href="https://github.com/safaeren777-collab/airmouse">GitHub</a>
   </div>
 </footer>
 

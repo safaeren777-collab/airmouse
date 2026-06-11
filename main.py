@@ -37,10 +37,10 @@ import action_executor
 
 CONFIG_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.json")
 
-class AntigravityApp(QObject):
+class AirMouseApp(QObject):
     def __init__(self):
         super().__init__()
-        log.info("Initializing Antigravity V4 application...")
+        log.info("Initializing AirMouse V4 application...")
 
         # Load config
         self.load_config()
@@ -171,7 +171,7 @@ class AntigravityApp(QObject):
             painter.end()
 
         self.tray.setIcon(QIcon(pixmap))
-        self.tray.setToolTip(f"Antigravity V4 ({'Dinlemede' if active else 'Uykuda'})")
+        self.tray.setToolTip(f"AirMouse V4 ({'Dinlemede' if active else 'Uykuda'})")
 
     def on_tray_activated(self, reason):
         if reason == QSystemTrayIcon.ActivationReason.DoubleClick:
@@ -206,7 +206,7 @@ class AntigravityApp(QObject):
         if active:
             self.action_listen.setText("Dinleme Modunu Kapat")
             self.tray.showMessage(
-                "Antigravity Dinlemede",
+                "AirMouse Dinlemede",
                 "El hareketleriniz takip ediliyor! Uyutmak için: Ctrl+Space",
                 QSystemTrayIcon.MessageIcon.Information,
                 2000
@@ -215,7 +215,7 @@ class AntigravityApp(QObject):
         else:
             self.action_listen.setText("Dinleme Modunu Aç")
             self.tray.showMessage(
-                "Antigravity Uykuda",
+                "AirMouse Uykuda",
                 "Hareket takibi durduruldu.",
                 QSystemTrayIcon.MessageIcon.Information,
                 1500
@@ -340,5 +340,5 @@ if __name__ == "__main__":
     # But settings window exit_requested signal will quit app cleanly when intended.
     app.setQuitOnLastWindowClosed(False)
 
-    app_instance = AntigravityApp()
+    app_instance = AirMouseApp()
     sys.exit(app.exec())

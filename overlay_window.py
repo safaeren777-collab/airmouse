@@ -7,7 +7,7 @@ log = logging.getLogger("VirtualMouse.Overlay")
 
 class OverlayWindow(QWidget):
     """
-    Antigravity V4 şeffaf overlay'i.
+    AirMouse V4 şeffaf overlay'i.
     - Üst neon ışık + mod pili: aktif sürükleme modunu gösterir (SCROLL, UYGULAMA GEÇİŞİ)
     - Toast: tetiklenen kısayolların anlık bildirimi
     """

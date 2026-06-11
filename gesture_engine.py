@@ -18,7 +18,7 @@ FINGER_TR = {"INDEX": "İşaret", "MIDDLE": "Orta", "RING": "Yüzük", "PINKY": 
 
 class GestureEngine(QThread):
     """
-    Antigravity V4 jest motoru.
+    AirMouse V4 jest motoru.
 
     Mutlak konum + statik poz sistemi yerine pinch (çimdik) tabanlı,
     histerezisli durum makinesi kullanır:

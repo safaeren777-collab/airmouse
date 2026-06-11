@@ -22,7 +22,7 @@ class SettingsWindow(QWidget):
         self.config_path = config_path
         self._loading = True  # init sırasında save tetiklenmesin
 
-        self.setWindowTitle("Antigravity V4 - Akıllı Jest Asistanı")
+        self.setWindowTitle("AirMouse V4 - Akıllı Jest Asistanı")
         self.resize(880, 680)
         self.setMinimumSize(820, 620)
 
@@ -153,7 +153,7 @@ class SettingsWindow(QWidget):
         title_vbox = QVBoxLayout()
         title_vbox.setSpacing(2)
 
-        main_title = QLabel("ANTIGRAVITY JEST ASİSTANI V4")
+        main_title = QLabel("AIRMOUSE JEST ASİSTANI V4")
         main_title.setStyleSheet("font-size: 18px; font-weight: 800; letter-spacing: 1px; color: #39ff14;")
         sub_title = QLabel("Pinch Tabanlı Mikro-Jest ve Yüz İfadesi Kontrol Sistemi")
         sub_title.setStyleSheet("color: #71717a; font-size: 12px;")
